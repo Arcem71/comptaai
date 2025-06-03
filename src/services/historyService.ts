@@ -9,7 +9,7 @@ export const fetchHistory = async (): Promise<HistoryEntry[]> => {
     .limit(50);
   
   if (error) {
-    console.error('Error fetching history:', error);
+    console.error('Erreur lors de la récupération de l\'historique :', error);
     throw error;
   }
   
@@ -33,7 +33,7 @@ export const addHistoryEntry = async (
     .insert([entry]);
   
   if (error) {
-    console.error('Error adding history entry:', error);
+    console.error('Erreur lors de l\'ajout dans l\'historique :', error);
     throw error;
   }
 };
@@ -45,20 +45,19 @@ export const deleteHistoryEntry = async (id: string): Promise<void> => {
     .eq('id', id);
 
   if (error) {
-    console.error('Error deleting history entry:', error);
+    console.error('Erreur lors de la suppression de l\'entrée :', error);
     throw error;
   }
 };
 
 export const deleteAllHistory = async (): Promise<void> => {
-  // Using a raw query for bulk deletion
   const { error } = await supabase
     .from('file_history')
     .delete()
     .gte('id', '00000000-0000-0000-0000-000000000000');
 
   if (error) {
-    console.error('Error deleting all history:', error);
+    console.error('Erreur lors de la suppression de l\'historique :', error);
     throw error;
   }
 }

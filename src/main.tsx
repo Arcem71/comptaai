@@ -18,6 +18,16 @@ createRoot(document.getElementById('root')!).render(
             background: '#fff',
             color: '#333',
           },
+          loading: {
+            iconTheme: {
+              primary: '#1E0F45',
+              secondary: '#fff',
+            },
+            style: {
+              background: '#fff',
+              color: '#333',
+            },
+          },
           success: {
             iconTheme: {
               primary: '#10B981',

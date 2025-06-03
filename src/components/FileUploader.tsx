@@ -147,7 +147,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
             {isProcessing ? (
               <span className="flex items-center justify-center">
                 <Loader2 className="animate-spin h-5 w-5 mr-2" />
-                Traitement en cours...
+                Renommage en cours...
               </span>
             ) : (
               'Renommer les fichiers'

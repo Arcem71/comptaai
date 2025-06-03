@@ -137,14 +137,14 @@ const HistoryList: React.FC<HistoryListProps> = ({ history, isLoading, onHistory
             )}
             
             <div className="text-sm mt-2">
-              <p className="text-gray-600 font-medium mb-2">Fichiers ({entry.files.length}):</p>
+              <p className="text-gray-600 font-medium mb-2">Fichiers ({entry.files.length}) :</p>
               <div className="space-y-1.5 pl-2">
                 {entry.files.map((file, index) => (
                   <div key={index} className="text-xs text-gray-500">
                     {file.renamed ? (
                       <div className="flex flex-col">
                         <span className="font-medium">{file.renamed}</span>
-                        <span className="text-gray-400">Original: {file.original}</span>
+                        <span className="text-gray-400">Original : {file.original}</span>
                       </div>
                     ) : (
                       file.original

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, CheckCircle, Loader2, PenLine } from 'lucide-react';
+import { FileText, Loader2, PenLine, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { classifyFiles, getFilePreviewUrl } from '../services/fileService';
 import type { FileEntry } from '../types/history';
@@ -52,7 +52,7 @@ const FileList: React.FC<FileListProps> = ({
         onHistoryUpdate();
       }
     } catch (error) {
-      console.error('Error classifying files:', error);
+      console.error('Erreur lors de la classification des fichiers:', error);
       toast.error('Erreur lors de la classification des fichiers');
       await addHistoryEntry(renamedFiles, 'error');
       onHistoryUpdate();
@@ -102,9 +102,21 @@ const FileList: React.FC<FileListProps> = ({
       const url = await getFilePreviewUrl(file.storagePath);
       setPreviewUrl(url);
     } catch (error) {
-      console.error('Error getting preview URL:', error);
+      console.error('Erreur lors de l\'ouverture de l\'aperçu:', error);
       toast.error('Erreur lors de l\'ouverture de l\'aperçu');
     }
+  };
+
+  const handleDelete = (index: number) => {
+    const newUploadedFiles = [...uploadedFiles];
+    const newRenamedFiles = [...renamedFiles];
+    
+    newUploadedFiles.splice(index, 1);
+    newRenamedFiles.splice(index, 1);
+    
+    setUploadedFiles(newUploadedFiles);
+    setRenamedFiles(newRenamedFiles);
+    toast.success('Fichier supprimé');
   };
 
   if (renamedFiles.length === 0) {
@@ -145,26 +157,34 @@ const FileList: React.FC<FileListProps> = ({
                   autoFocus
                 />
               ) : (
-                <>
-                  <p className="text-sm font-medium text-gray-700 truncate">
+                <div onClick={() => !isProcessing && startEditing(index)} className="cursor-pointer">
+                  <p className="text-sm font-medium text-gray-700 truncate hover:text-secondary transition-colors">
                     {file.renamed}
                   </p>
                   <p className="text-xs text-gray-500 truncate">
-                    Original: {file.original}
+                    Original : {file.original}
                   </p>
-                </>
+                </div>
               )}
             </div>
-            {!isProcessing && editingIndex !== index && (
+            <div className="flex items-center gap-2">
+              {!isProcessing && editingIndex !== index && (
+                <button
+                  onClick={() => startEditing(index)}
+                  className="text-gray-400 hover:text-secondary transition-colors"
+                  title="Renommer"
+                >
+                  <PenLine className="h-4 w-4" />
+                </button>
+              )}
               <button
-                onClick={() => startEditing(index)}
-                className="text-gray-400 hover:text-secondary transition-colors ml-2"
-                title="Renommer"
+                onClick={() => handleDelete(index)}
+                className="text-gray-400 hover:text-red-500 transition-colors"
+                title="Supprimer"
               >
-                <PenLine className="h-4 w-4" />
+                <X className="h-4 w-4" />
               </button>
-            )}
-            <CheckCircle className="h-5 w-5 text-secondary ml-2 flex-shrink-0" />
+            </div>
           </div>
         ))}
       </div>

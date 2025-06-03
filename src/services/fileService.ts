@@ -31,8 +31,8 @@ const makeRequest = async (formData: FormData): Promise<Response> => {
   });
 
   if (!response.ok) {
-    const errorText = await response.text().catch(() => 'No error details available');
-    throw new Error(`HTTP Error ${response.status}: ${errorText}`);
+    const errorText = await response.text().catch(() => 'Aucun détail d\'erreur disponible');
+    throw new Error(`Erreur HTTP ${response.status} : ${errorText}`);
   }
 
   return response;
@@ -42,27 +42,26 @@ export const getFilePreviewUrl = async (path: string): Promise<string> => {
   try {
     const { data, error } = await supabase.storage
       .from('documents')
-      .createSignedUrl(path, 3600); // URL valid for 1 hour
+      .createSignedUrl(path, 3600);
 
     if (error) {
-      console.error('Error getting signed URL:', error);
+      console.error('Erreur lors de la génération de l\'URL signée :', error);
       throw error;
     }
 
     if (!data?.signedUrl) {
-      throw new Error('No signed URL returned');
+      throw new Error('Aucune URL signée générée');
     }
 
     return data.signedUrl;
   } catch (error) {
-    console.error('Error in getFilePreviewUrl:', error);
-    throw new Error('Failed to generate preview URL');
+    console.error('Erreur dans getFilePreviewUrl :', error);
+    throw new Error('Impossible de générer l\'URL de prévisualisation');
   }
 };
 
 export const cleanupStorage = async (): Promise<void> => {
   try {
-    // First, ensure the uploads folder exists by trying to create it
     const emptyFile = new File([''], '.keep', { type: 'text/plain' });
     await supabase.storage
       .from('documents')
@@ -79,13 +78,13 @@ export const cleanupStorage = async (): Promise<void> => {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to cleanup storage');
+      throw new Error('Échec du nettoyage du stockage');
     }
 
     const data = await response.json();
-    toast.success(`Nettoyage réussi: ${data.deletedFiles?.length || 0} fichiers supprimés`);
+    toast.success(`Nettoyage réussi : ${data.deletedFiles?.length || 0} fichiers supprimés`);
   } catch (error) {
-    console.error('Error cleaning up storage:', error);
+    console.error('Erreur lors du nettoyage du stockage :', error);
     toast.error('Erreur lors du nettoyage du stockage');
   }
 };
@@ -101,18 +100,18 @@ const uploadToStorage = async (file: File, fileName: string): Promise<string> =>
       });
 
     if (error) {
-      console.error('Error uploading file:', error);
+      console.error('Erreur lors du téléversement :', error);
       throw error;
     }
 
     if (!data?.path) {
-      throw new Error('No path returned from upload');
+      throw new Error('Aucun chemin retourné après le téléversement');
     }
 
     return data.path;
   } catch (error) {
-    console.error('Error in uploadToStorage:', error);
-    throw new Error('Failed to upload file');
+    console.error('Erreur dans uploadToStorage :', error);
+    throw new Error('Échec du téléversement du fichier');
   }
 };
 
@@ -127,7 +126,7 @@ export const renameFiles = async (files: File[]): Promise<RenameResponse> => {
       formData.append('action', 'renommage');
       formData.append('files', file);
 
-      toast.loading(`Renaming file ${i + 1} of ${files.length}...`, { id: `rename-${i}` });
+      toast.loading(`Traitement du fichier ${i + 1} sur ${files.length}...`, { id: `rename-${i}` });
 
       try {
         const response = await pRetry(
@@ -136,9 +135,9 @@ export const renameFiles = async (files: File[]): Promise<RenameResponse> => {
             retries: 3,
             onFailedAttempt: error => {
               console.log(
-                `Attempt ${error.attemptNumber} failed for file ${file.name}. ${error.retriesLeft} retries left.`
+                `Tentative ${error.attemptNumber} échouée pour le fichier ${file.name}. ${error.retriesLeft} essais restants.`
               );
-              toast.error(`Retry attempt ${error.attemptNumber} for ${file.name}...`, { id: `rename-${i}` });
+              toast.error(`Nouvelle tentative ${error.attemptNumber} pour ${file.name}...`, { id: `rename-${i}` });
             },
           }
         );
@@ -150,10 +149,10 @@ export const renameFiles = async (files: File[]): Promise<RenameResponse> => {
           
           try {
             storagePath = await uploadToStorage(file, webhookResponse.nouveau_nom);
-            toast.success(`File ${i + 1} uploaded successfully!`, { id: `upload-${i}` });
           } catch (uploadError) {
-            console.error('Error uploading to storage:', uploadError);
-            toast.error(`Error uploading ${webhookResponse.nouveau_nom} to storage`, { id: `upload-error-${i}` });
+            console.error('Erreur lors du téléversement :', uploadError);
+            toast.error(`Erreur lors du téléversement de ${webhookResponse.nouveau_nom}`, { id: `upload-error-${i}` });
+            throw uploadError;
           }
 
           renamedFiles.push({
@@ -163,17 +162,17 @@ export const renameFiles = async (files: File[]): Promise<RenameResponse> => {
             type: webhookResponse.type
           });
           
-          toast.success(`File ${i + 1} renamed successfully!`, { id: `rename-${i}` });
+          toast.success(`Fichier traité avec succès !`, { id: `rename-${i}` });
         } else {
-          throw new Error('Invalid response format');
+          throw new Error('Format de réponse invalide');
         }
       } catch (error) {
-        console.error(`Error renaming file ${file.name}:`, error);
+        console.error(`Erreur lors du traitement du fichier ${file.name} :`, error);
         hasError = true;
         toast.error(
           error instanceof Error 
-            ? `Error renaming ${file.name}: ${error.message}` 
-            : `Error renaming ${file.name}`,
+            ? `Erreur lors du traitement de ${file.name} : ${error.message}` 
+            : `Erreur lors du traitement de ${file.name}`,
           { id: `rename-${i}` }
         );
       }
@@ -186,7 +185,7 @@ export const renameFiles = async (files: File[]): Promise<RenameResponse> => {
     if (hasError) {
       return {
         success: false,
-        error: 'Some files failed to rename'
+        error: 'Certains fichiers n\'ont pas pu être traités'
       };
     }
 
@@ -195,10 +194,10 @@ export const renameFiles = async (files: File[]): Promise<RenameResponse> => {
       renamedFiles
     };
   } catch (error) {
-    console.error('Error in rename operation:', error);
+    console.error('Erreur lors de l\'opération de traitement :', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred'
+      error: error instanceof Error ? error.message : 'Une erreur inconnue est survenue'
     };
   }
 };
@@ -218,7 +217,7 @@ export const classifyFiles = async (files: File[], renamedFiles: FileEntry[]): P
         formData.append('type', renamedFiles[i].type);
       }
 
-      toast.loading(`Classifying file ${i + 1} of ${files.length}...`, { id: `classify-${i}` });
+      toast.loading(`Classification du fichier ${i + 1} sur ${files.length}...`, { id: `classify-${i}` });
 
       try {
         const response = await pRetry(
@@ -227,7 +226,7 @@ export const classifyFiles = async (files: File[], renamedFiles: FileEntry[]): P
             retries: 3,
             onFailedAttempt: error => {
               console.log(
-                `Attempt ${error.attemptNumber} failed for file ${file.name}. ${error.retriesLeft} retries left.`
+                `Tentative ${error.attemptNumber} échouée pour le fichier ${file.name}. ${error.retriesLeft} essais restants.`
               );
             },
           }
@@ -235,14 +234,14 @@ export const classifyFiles = async (files: File[], renamedFiles: FileEntry[]): P
 
         const message = await response.text();
         messages.push(message);
-        toast.success(`File ${i + 1} classified successfully!`, { id: `classify-${i}` });
+        toast.success(`Fichier ${i + 1} classé avec succès !`, { id: `classify-${i}` });
       } catch (error) {
-        console.error(`Error classifying file ${file.name}:`, error);
+        console.error(`Erreur lors de la classification du fichier ${file.name} :`, error);
         hasError = true;
         toast.error(
           error instanceof Error 
-            ? `Error classifying ${file.name}: ${error.message}` 
-            : `Error classifying ${file.name}`,
+            ? `Erreur lors de la classification de ${file.name} : ${error.message}` 
+            : `Erreur lors de la classification de ${file.name}`,
           { id: `classify-${i}` }
         );
       }
@@ -255,7 +254,7 @@ export const classifyFiles = async (files: File[], renamedFiles: FileEntry[]): P
     if (hasError) {
       return {
         success: false,
-        error: 'Some files failed to classify'
+        error: 'Certains fichiers n\'ont pas pu être classés'
       };
     }
 
@@ -264,10 +263,10 @@ export const classifyFiles = async (files: File[], renamedFiles: FileEntry[]): P
       message: messages.join(' | ')
     };
   } catch (error) {
-    console.error('Error in classify operation:', error);
+    console.error('Erreur lors de l\'opération de classification :', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error occurred'
+      error: error instanceof Error ? error.message : 'Une erreur inconnue est survenue'
     };
   }
 };
