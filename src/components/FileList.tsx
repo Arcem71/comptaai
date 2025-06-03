@@ -169,21 +169,23 @@ const FileList: React.FC<FileListProps> = ({
             </div>
             <div className="flex items-center gap-2">
               {!isProcessing && editingIndex !== index && (
-                <button
-                  onClick={() => startEditing(index)}
-                  className="text-gray-400 hover:text-secondary transition-colors"
-                  title="Renommer"
-                >
-                  <PenLine className="h-4 w-4" />
-                </button>
+                <>
+                  <button
+                    onClick={() => startEditing(index)}
+                    className="text-gray-400 hover:text-secondary transition-colors"
+                    title="Renommer"
+                  >
+                    <PenLine className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(index)}
+                    className="text-gray-400 hover:text-red-500 transition-colors"
+                    title="Supprimer"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </>
               )}
-              <button
-                onClick={() => handleDelete(index)}
-                className="text-gray-400 hover:text-red-500 transition-colors"
-                title="Supprimer"
-              >
-                <X className="h-4 w-4" />
-              </button>
             </div>
           </div>
         ))}
