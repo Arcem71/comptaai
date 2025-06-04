@@ -61,8 +61,8 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       const result = await renameFiles(files);
       
       if (result.success && result.renamedFiles) {
-        setUploadedFiles(files);
-        setRenamedFiles(result.renamedFiles);
+        setUploadedFiles(prevFiles => [...prevFiles, ...files]);
+        setRenamedFiles(prevFiles => [...prevFiles, ...result.renamedFiles]);
         await addHistoryEntry(result.renamedFiles, 'success');
         onHistoryUpdate();
         setFiles([]);

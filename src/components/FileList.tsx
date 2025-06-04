@@ -48,7 +48,7 @@ const FileList: React.FC<FileListProps> = ({
         setRenamedFiles([]);
       } else {
         toast.error(result.error || 'Erreur lors de la classification des fichiers');
-        await addHistoryEntry(renamedFiles, 'error');
+        await addHistoryEntry(renamedFiles, 'error', result.error);
         onHistoryUpdate();
       }
     } catch (error) {
@@ -210,10 +210,12 @@ const FileList: React.FC<FileListProps> = ({
         )}
       </button>
 
-      <FilePreviewModal 
-        url={previewUrl} 
-        onClose={() => setPreviewUrl(null)} 
-      />
+      {previewUrl && (
+        <FilePreviewModal 
+          url={previewUrl} 
+          onClose={() => setPreviewUrl(null)} 
+        />
+      )}
     </div>
   );
 };
