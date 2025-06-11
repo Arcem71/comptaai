@@ -37,6 +37,21 @@ const makeRequest = async (formData: FormData): Promise<Response> => {
   return response;
 };
 
+const sanitizeFileName = (fileName: string): string => {
+  return fileName
+    // Normalize to remove diacritics (accents)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    // Replace spaces with hyphens
+    .replace(/\s+/g, '-')
+    // Remove any characters that are not alphanumeric, hyphens, underscores, or periods
+    .replace(/[^a-zA-Z0-9\-_.]/g, '')
+    // Remove multiple consecutive hyphens
+    .replace(/-+/g, '-')
+    // Remove leading/trailing hyphens
+    .replace(/^-+|-+$/g, '');
+};
+
 export const getFilePreviewUrl = async (path: string): Promise<string> => {
   try {
     const { data, error } = await supabase.storage
@@ -90,7 +105,8 @@ export const cleanupStorage = async (): Promise<void> => {
 
 const uploadToStorage = async (file: File, fileName: string): Promise<string> => {
   try {
-    const path = `uploads/${fileName}`;
+    const sanitizedFileName = sanitizeFileName(fileName);
+    const path = `uploads/${sanitizedFileName}`;
     const { data, error } = await supabase.storage
       .from('documents')
       .upload(path, file, {
@@ -115,7 +131,6 @@ const uploadToStorage = async (file: File, fileName: string): Promise<string> =>
 
 export const renameFiles = async (files: File[]): Promise<RenameResponse> => {
   const renamedFiles: FileEntry[] = [];
-  let hasError = false;
 
   try {
     for (let i = 0; i < files.length; i++) {
@@ -148,7 +163,12 @@ export const renameFiles = async (files: File[]): Promise<RenameResponse> => {
             storagePath = await uploadToStorage(file, webhookResponse.nouveau_nom);
           } catch (uploadError) {
             console.error('Erreur lors du téléversement :', uploadError);
-            throw uploadError;
+            // Upload to storage with original filename as fallback
+            try {
+              storagePath = await uploadToStorage(file, file.name);
+            } catch (fallbackError) {
+              console.error('Erreur lors du téléversement de secours :', fallbackError);
+            }
           }
 
           renamedFiles.push({
@@ -164,8 +184,22 @@ export const renameFiles = async (files: File[]): Promise<RenameResponse> => {
         }
       } catch (error) {
         console.error(`Erreur lors du traitement du fichier ${file.name} :`, error);
-        hasError = true;
-        toast.error(`Erreur lors du traitement de ${file.name}`, { id: `rename-${i}` });
+        
+        // Add file to renamed list even if renaming failed, using original name
+        let storagePath: string | undefined;
+        try {
+          storagePath = await uploadToStorage(file, file.name);
+        } catch (uploadError) {
+          console.error('Erreur lors du téléversement de secours :', uploadError);
+        }
+
+        renamedFiles.push({
+          original: file.name,
+          renamed: file.name, // Use original name as renamed name
+          storagePath
+        });
+        
+        toast.error(`Erreur lors du renommage de ${file.name}, vous pouvez le renommer manuellement`, { id: `rename-${i}` });
       }
 
       if (i < files.length - 1) {
@@ -173,13 +207,7 @@ export const renameFiles = async (files: File[]): Promise<RenameResponse> => {
       }
     }
 
-    if (hasError) {
-      return {
-        success: false,
-        error: 'Certains fichiers n\'ont pas pu être traités'
-      };
-    }
-
+    // Always return success since we add all files to the list
     return {
       success: true,
       renamedFiles
