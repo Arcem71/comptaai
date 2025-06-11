@@ -199,7 +199,7 @@ export const renameFiles = async (files: File[]): Promise<RenameResponse> => {
           storagePath
         });
         
-        toast.error(`Erreur lors du renommage de ${file.name}, vous pouvez le renommer manuellement`, { id: `rename-${i}` });
+        toast.success(`Erreur lors du renommage de ${file.name}, vous pouvez le renommer manuellement`, { id: `rename-${i}` });
       }
 
       if (i < files.length - 1) {
@@ -231,6 +231,7 @@ export const classifyFiles = async (files: File[], renamedFiles: FileEntry[]): P
       formData.append('action', 'classement');
       formData.append('files', file);
       formData.append('nouveau_nom', renamedFiles[i].renamed);
+      formData.append('ancien_nom', renamedFiles[i].original); // Ajout de l'ancien nom
       if (renamedFiles[i].type) {
         formData.append('type', renamedFiles[i].type);
       }
